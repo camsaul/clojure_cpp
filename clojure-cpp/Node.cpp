@@ -15,8 +15,8 @@ namespace clojure {
 		next_ { next }
 	{}
 	
-	void Node::Run() const {
+	void Node::Eval() const {
 		std::cout << "HERE!" << std::endl;
-		if (next_) next_->Run();
+		if (next_) next_->Eval();
 	}
 }

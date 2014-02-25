@@ -18,13 +18,16 @@ int main(int argc, const char * argv[])
 	// insert code here...
 	std::cout << "Hello, World!\n";
 	
+	Node empty {};
+	empty.Eval();
+
 	Node2<std::string> n {"TESTING!"};
-//	Node n {};
-//	Node n2 {std::make_shared<const Node2<std::string>>(n)};
 	Node n2 {n};
 	assert(n2.Next());
-	Node2<std::string> n3 { "YAY", std::make_shared<const Node>(n2) };
-	n3.Run();
+	Node2<std::string> n3 { "YAY", n2 };
+	n3.Eval();
+	
+	
     return 0;
 }
 

@@ -13,43 +13,56 @@
 #include <iostream>
 
 namespace clojure {
+
+	class Node;
+	typedef std::shared_ptr<const Node> NodePtr;
+	
+	template <typename NodeT>
+	NodePtr MakeNodePtr(NodeT node) { return std::make_shared<const NodeT>(node); }
+	
 	class Node {
 	public:
-		template <typename T>
-		Node(T n):
-			next_ { std::make_shared<const T>(n) }
+		template <typename NodeT>
+		Node(NodeT n):
+			next_ { MakeNodePtr<NodeT>(n) }
 		{}
 		
-		Node(std::shared_ptr<const Node> next);
+		Node(NodePtr next = nullptr);
 		
-		std::shared_ptr<const Node> Next() const { return next_; }
+		NodePtr Next() const { return next_; }
 		
-		virtual void Run() const;
+		virtual void Eval() const;
 		
 		virtual ~Node() = default;
 		
 	private:
-		std::shared_ptr<const Node> next_;
+		NodePtr next_;
 	};
 	
-	template <typename T>
+	template <typename ValueT>
 	class Node2 : public Node {
 	public:
-		Node2(const T& value, std::shared_ptr<const Node> next = nullptr):
+		Node2(const ValueT& value, NodePtr next = nullptr):
 			Node { next },
 			value_ { value }
 		{}
 		
-		const T& Value() const { return value_; }
+		template <typename NodeT>
+		Node2(const ValueT& value, NodeT next):
+			Node { MakeNodePtr<NodeT>(next) },
+			value_ { value }
+		{}
 		
-		virtual void Run() const override {
+		const ValueT& Value() const { return value_; }
+		
+		virtual void Eval() const override {
 			std::cout << "Value: " << Value() << std::endl;
-			if (Next()) Next()->Run();
+			if (Next()) Next()->Eval();
 		}
 		
 		virtual ~Node2() override = default;
 	private:
-		const T value_;
+		const ValueT value_;
 	};
 }
 
