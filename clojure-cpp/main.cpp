@@ -35,17 +35,6 @@ void TryEvalAndPrint(NodePtr node) {
 	}
 }
 
-//NodePtr TryEvalAndPrint(NodeFn fn, NodePtr node = nullptr) {
-//	NodePtr result = nullptr;
-//	try {
-//		result = fn(node);
-//		TryEvalAndPrint(result);
-//	} catch (const std::runtime_error& e) {
-//		std::cerr << "Caught exception: " << e.what() << std::endl;
-//	}
-//	return result;
-//}
-
 template <typename ValueT>
 const Node2<ValueT>* TryDynamicCastNode(NodePtr node) {
 	if (!node) {
