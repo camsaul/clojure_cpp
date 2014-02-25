@@ -7,16 +7,46 @@
 //
 
 #include <iostream>
+#include <cxxabi.h>
 
 #include "Node.h"
 
+using namespace std;
+
+
+
 namespace clojure {
+	std::string readable_name(const std::type_info& typeInfo) {
+		int status ;
+		char *temp = __cxxabiv1::__cxa_demangle(typeInfo.name(), nullptr, nullptr, &status);
+		if(temp) {
+			string result{temp};
+			free(temp);
+			return result;
+		}
+		else return typeInfo.name() ;
+	}
+	
+	Node::Node():
+		next_ { nullptr }
+	{}
+	
+	NodePtr Node::Eval() const {
+		return nullptr;
+	}
+	
+	std::string Node::Print() const {
+		return "nil [empty node]";
+	}
+	
 	Node::Node(std::shared_ptr<const Node> next):
 		next_ { next }
 	{}
 	
-	void Node::Eval() const {
-		std::cout << "HERE!" << std::endl;
-		if (next_) next_->Eval();
-	}
+//	NodePtr Node::Eval() const {
+//		if (Next()) {
+//			throw runtime_error { "Not a function: " + readable_name(typeid(*this).name()) + " is not a function. " };
+//		}
+//		return MakeNodePtr(*this);
+//	}
 }

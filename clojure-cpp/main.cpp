@@ -6,11 +6,25 @@
 //  Copyright (c) 2014 Cam Saul. All rights reserved.
 //
 
-#include <cassert>
+#include <exception>
+#include <functional>
 #include <iostream>
+
 #include "Node.h"
 
 using namespace clojure;
+
+typedef std::shared_ptr<const Node> NodePtr;
+typedef std::function<NodePtr(NodePtr)> NodeFn;
+
+void TryEvalAndPrint(const Node& node) {
+	try {
+		auto val = node.Eval();
+		std::cout << (val ? val->Print() : "nil") << std::endl;
+	} catch (const std::runtime_error& e) {
+		std::cerr << "Caught exception: " << e.what() << std::endl;
+	}
+}
 
 int main(int argc, const char * argv[])
 {
@@ -18,14 +32,19 @@ int main(int argc, const char * argv[])
 	// insert code here...
 	std::cout << "Hello, World!\n";
 	
-	Node empty {};
-	empty.Eval();
-
-	Node2<std::string> n {"TESTING!"};
-	Node n2 {n};
-	assert(n2.Next());
-	Node2<std::string> n3 { "YAY", n2 };
-	n3.Eval();
+	Node2<std::string> n {"TESTING!"};	// "Value: Testing!"
+	TryEvalAndPrint(n);
+	
+	Node n2 {};
+	TryEvalAndPrint(n2);
+	
+	Node2<std::string> n3 { "YAY", n2 }; // "Value: YAY"
+	TryEvalAndPrint(n3);
+	
+	Node2<int> n4 { 100 }; // "Int: 100"
+	TryEvalAndPrint(n4);
+	
+	// function that takes one or more nodes ?
 	
 	
     return 0;
