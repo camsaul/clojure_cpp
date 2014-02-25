@@ -47,6 +47,10 @@ namespace clojure {
 		
 		virtual operator bool() const; // default implementation returns nil, since base class is empty node
 		
+		virtual operator NodePtr() const {
+			return MakeNodePtr(*this);
+		}
+		
 		virtual ~Node() = default;
 	
 	protected:
@@ -92,6 +96,10 @@ namespace clojure {
 		
 		virtual operator bool() const override {
 			return value_;
+		}
+		
+		virtual operator NodePtr() const override {
+			return MakeNodePtr(*this);
 		}
 		
 		virtual ~Node2() override = default;

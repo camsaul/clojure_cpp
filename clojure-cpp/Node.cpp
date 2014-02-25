@@ -49,7 +49,7 @@ namespace clojure {
 	}
 	
 	std::string Node::Print() const {
-		return "nil [empty node]";
+		return "nil (empty)";
 	}
 	
 	Node::Node(std::shared_ptr<const Node> next):

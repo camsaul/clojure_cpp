@@ -40,6 +40,19 @@ NodePtr TryEvalAndPrint(NodeFn fn, NodePtr node = nullptr) {
 	return result;
 }
 
+template <typename ValueT>
+const Node2<ValueT>* TryDynamicCastNode(NodePtr node) {
+	if (!node) {
+		throw std::runtime_error { "TryDynamicCastNode was called with a nil node!" };
+	}
+	const Node2<ValueT>* result =  dynamic_cast<const Node2<ValueT> *>(node.get());
+	if (!result) {
+		throw std::runtime_error { "type error: " + node->ReadableTypeName() + " (value_ = " + node->Print() + ") is not an int!" };
+	}
+	return result;
+}
+
+
 int main(int argc, const char * argv[])
 {
 
@@ -76,21 +89,17 @@ int main(int argc, const char * argv[])
 			
 			// try to dyamic cast to int ?
 			auto next = node->Next();
-			const Node2<int> *intNode = dynamic_cast<const Node2<int> *>(node.get());
-			if (!intNode) {
-				throw std::runtime_error { "type error: " + node->ReadableTypeName() + " (value_ = " + node->Print() + ") is not an int!" };
-			}
-			const Node2<int> *intNode2 = dynamic_cast<const Node2<int> *>(next.get());
-			if (!intNode2) {
-				throw std::runtime_error { "type error: " + next->ReadableTypeName() + " (value_ = " + next->Print() + ") is not an int!" };
-			}
-			return MakeNodePtr<Node2<int>>(intNode->Value() + intNode2->Value());
+			auto n1 = TryDynamicCastNode<int>(node);
+			auto n2 = TryDynamicCastNode<int>(node->Next());
+			return MakeNodePtr<Node2<int>>(n1->Value() + n2->Value());
 		}
 	};
 	
-	TryEvalAndPrint(NodeFn_Plus, MakeNodePtr(n5)); // 300 ?
+	TryEvalAndPrint(NodeFn_Plus, n5); // 300 ?
 	
 	TryEvalAndPrint(NodeFn_Plus, n3); // n3 = {"YAY, nil} exception
+	
+	// ok, try recursion
 	
     return 0;
 }
