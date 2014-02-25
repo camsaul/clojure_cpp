@@ -30,16 +30,16 @@ void TryEvalAndPrint(NodePtr node) {
 	}
 }
 
-NodePtr TryEvalAndPrint(NodeFn fn, NodePtr node = nullptr) {
-	NodePtr result = nullptr;
-	try {
-		result = fn(node);
-		TryEvalAndPrint(result);
-	} catch (const std::runtime_error& e) {
-		std::cerr << "Caught exception: " << e.what() << std::endl;
-	}
-	return result;
-}
+//NodePtr TryEvalAndPrint(NodeFn fn, NodePtr node = nullptr) {
+//	NodePtr result = nullptr;
+//	try {
+//		result = fn(node);
+//		TryEvalAndPrint(result);
+//	} catch (const std::runtime_error& e) {
+//		std::cerr << "Caught exception: " << e.what() << std::endl;
+//	}
+//	return result;
+//}
 
 template <typename ValueT>
 const Node2<ValueT>* TryDynamicCastNode(NodePtr node) {
@@ -101,13 +101,12 @@ int main(int argc, const char * argv[])
 		}
 	};
 	
-	TryEvalAndPrint(NodeFn_Plus, n5); // 300 ?
+	TryEvalAndPrint(FnNode{ NodeFn_Plus, n5 });
 	
-	TryEvalAndPrint(NodeFn_Plus, n3); // n3 = {"YAY, nil} -> YAY nil
+	TryEvalAndPrint(FnNode{ NodeFn_Plus, n3 }); // n3 = {"YAY, nil} -> YAY nil
 	
 	// ok, try eval and print with fn at head of list
 	NodePtr node = MakeNodePtr3(100, 50);
-	std::cout << node->Print() << " " << node->PrintRest() << std::endl;
 	FnNode fnNode { NodeFn_Plus, node};
 	TryEvalAndPrint(fnNode);
 
