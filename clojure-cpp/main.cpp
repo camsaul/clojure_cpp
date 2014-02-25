@@ -82,20 +82,20 @@ int main(int argc, const char * argv[])
 		if (!node) {
 			return NilNode;
 		}
-		else if (!node->Next()) {
+		else if (!node->Rest()) {
 			return node;
 		}
 		else {
 			// TODO: recursion: return H + NodeFn_Plus(T)
 			
 			// try to dyamic cast to int ?
-			if (typeid(*node) == typeid(*node->Next()) && node->ValueTypeInfo() == typeid(int)) {
+			if (typeid(*node) == typeid(*node->Rest()) && node->ValueTypeInfo() == typeid(int)) {
 				auto n1 = TryDynamicCastNode<int>(node);
-				auto n2 = TryDynamicCastNode<int>(node->Next());
+				auto n2 = TryDynamicCastNode<int>(node->Rest());
 				return MakeNodePtr<Node2<int>>(n1->Value() + n2->Value());
 			} else { // just concat any other situation
 				std::ostrstream os;
-				os << node->Print() + " " + node->Next()->Print();
+				os << node->Print() + " " + node->Rest()->Print();
 				return MakeNode2Ptr(os.str());
 			}
 		}
@@ -104,6 +104,13 @@ int main(int argc, const char * argv[])
 	TryEvalAndPrint(NodeFn_Plus, n5); // 300 ?
 	
 	TryEvalAndPrint(NodeFn_Plus, n3); // n3 = {"YAY, nil} -> YAY nil
+	
+	// ok, try eval and print with fn at head of list
+	NodePtr node = MakeNodePtr3(100, 50);
+	std::cout << node->Print() << " " << node->PrintRest() << std::endl;
+	FnNode fnNode { NodeFn_Plus, node};
+	TryEvalAndPrint(fnNode);
+
 	
 	// ok, try recursion
 	

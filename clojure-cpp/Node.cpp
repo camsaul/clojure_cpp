@@ -42,7 +42,7 @@ namespace clojure {
 	}
 	
 	Node::Node():
-		next_ { nullptr }
+		rest_ { nullptr }
 	{}
 	
 	Node::operator bool() const {
@@ -61,12 +61,24 @@ namespace clojure {
 		return "nil";
 	}
 	
+	std::string Node::PrintRest() const {
+		std::ostrstream os;
+		os << "(";
+		auto next = Rest();
+		while (next) {
+			os << " " << next->Print();
+			next = next->Rest();
+		}
+		os << ")";
+		return os.str();
+	}
+	
 	Node::Node(std::shared_ptr<const Node> next):
-		next_ { next }
+		rest_ { next }
 	{}
 	
 //	NodePtr Node::Eval() const {
-//		if (Next()) {
+//		if (Rest()) {
 //			throw runtime_error { "Not a function: " + readable_name(typeid(*this).name()) + " is not a function. " };
 //		}
 //		return MakeNodePtr(*this);

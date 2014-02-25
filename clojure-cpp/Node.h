@@ -17,10 +17,10 @@
 namespace clojure {
 	class Node;
 	
-	template <typename ValueT>
+	template <typename ValueT, typename PrintCastT>
 	class Node2;
 	
-	typedef std::shared_ptr<const Node> NodePtr;
+	typedef std::shared_ptr<const Node> NodePtr; // make this a custom class with ++ iterator behavior ?
 	
 //	template <typename ValueT>
 //	using Node2Ptr = std::shared_ptr<const Node2<ValueT>>;
@@ -28,8 +28,14 @@ namespace clojure {
 	template <typename NodeT = Node>
 	NodePtr MakeNodePtr(NodeT node = {}) { return std::make_shared<const NodeT>(node); }
 	
-	template <typename ValueT>
-	NodePtr MakeNode2Ptr(ValueT value, NodePtr next = nullptr) { return MakeNodePtr(Node2<ValueT>(value, next)); }
+	template <typename ValueT, typename NextPtrT = NodePtr>
+	NodePtr MakeNode2Ptr(ValueT value, NextPtrT next = nullptr) { return MakeNodePtr(Node2<ValueT, ValueT>(value, next)); }
+	
+	template <typename Value1T, typename Value2T>
+	NodePtr MakeNodePtr3(Value1T v1, Value2T v2) {
+		auto next = MakeNode2Ptr<Value2T>(v2);
+		return MakeNodePtr(Node2<Value1T, Value1T>(v1, next));
+	}
 	
 	typedef std::function<NodePtr(NodePtr)> NodeFn; // should take a const Node* param instead of NodePtr for efficiency ?
 	
@@ -37,12 +43,14 @@ namespace clojure {
 	public:
 		Node(); ///< nil node
 		
-		NodePtr Next() const { return next_; }
+		NodePtr Rest() const { return rest_; }
 		
 		virtual NodePtr Eval() const; ///< by default just evals to nil
 		
 		virtual std::string Print() const; ///< nil
 		virtual std::string DebugPrint(int indent = 0) const; ///< 'nil'
+		
+		virtual std::string PrintRest() const;
 		
 		virtual std::string ReadableTypeName() const; ///< returns node type for debugging purposes. Default implementation just uses RTTI type_info
 		
@@ -59,16 +67,16 @@ namespace clojure {
 	protected:
 		template <typename NodeT>
 		Node(NodeT n):
-			next_ { MakeNodePtr<NodeT>(n) }
+			rest_ { MakeNodePtr<NodeT>(n) }
 		{}
 		
 		Node(NodePtr next);
 		
 	private:
-		NodePtr next_;
+		NodePtr rest_;
 	};
 	
-	template <typename ValueT>
+	template <typename ValueT, typename PrintCastT = ValueT>
 	class Node2 : public Node {
 	public:
 		Node2(const ValueT& value, NodePtr next = nullptr):
@@ -76,16 +84,22 @@ namespace clojure {
 			value_ { value }
 		{}
 		
-		template <typename NodeT>
-		Node2(const ValueT& value, NodeT next):
-			Node { MakeNodePtr<NodeT>(next) },
+//		template <typename NodeValueT>
+//		Node2(const ValueT& value, Node next):
+//			Node { MakeNodePtr(next) },
+//			value_ { value }
+//		{}
+		
+		template <typename Value2T>
+		Node2(const ValueT& value, const Value2T& value2):
+			Node { MakeNode2Ptr<Value2T>(value2) },
 			value_ { value }
 		{}
 		
 		const ValueT& Value() const { return value_; }
 		
 		virtual NodePtr Eval() const override {
-			if (Next()) {
+			if (Rest()) {
 				throw std::runtime_error { "Not a function: " + ReadableTypeName() + " is not a function. " };
 			}
 			return MakeNodePtr(*this);
@@ -100,9 +114,9 @@ namespace clojure {
 			for (int i = 0; i < indent + 1; i++) {
 				os << "\t";
 			}
-			os << value_;
+			os << (PrintCastT)value_;
 			
-			if (Next()) os << std::endl << ", next_ = " << Next()->DebugPrint(indent+1);
+			if (Rest()) os << std::endl << ", rest_ = " << Rest()->DebugPrint(indent+1);
 
 			os << std::endl;
 			return os.str();
@@ -110,12 +124,12 @@ namespace clojure {
 		
 		virtual std::string Print() const override {
 			std::ostrstream os;
-			os << value_;
+			os << (PrintCastT)value_;
 			return os.str();
 		}
 		
 		virtual operator bool() const override {
-			return value_;
+			return bool(value_);
 		}
 		
 		virtual const std::type_info& ValueTypeInfo() const override {
@@ -128,33 +142,24 @@ namespace clojure {
 		
 		virtual ~Node2() override = default;
 	private:
-		const ValueT value_;
+		const ValueT value_; // rename head instead of value ?
 	};
-	
-//	template <> class Node2<int> : public Node {
-//	public:
-//		Node2(int value, NodePtr next = nullptr):
-//			Node { next },
-//			value_ { value }
-//		{}
-//		
-//		template <typename NodeT>
-//		Node2(int value, NodeT next):
-//			Node { MakeNodePtr<NodeT>(next) },
-//			value_ { value }
-//		{}
-//		
-//		int Value() const { return value_; }
-//
-//		virtual void Eval() const {
-//			std::cout << "Int: " << std::to_string(Value()) << std::endl;
-//			if (Next()) Next()->Eval();
-//		}
-//	private:
-//		const int value_;
-//	};
-
 	static const NodePtr NilNode = MakeNodePtr(Node{});
+	
+	class FnNode : public Node2<NodeFn, int> {
+	public:
+		FnNode (NodeFn fn, NodePtr args):
+			Node2(fn, args)
+		{}
+		
+		virtual std::string Print() const override {
+			return "<fn " + ReadableTypeName() + ">: " + PrintRest();
+		}
+	
+		virtual NodePtr Eval() const override {
+			return Rest() ? Value()(Rest()) : *this;
+		}
+	};
 }
 
 #endif /* defined(__clojure_cpp__Node__) */
