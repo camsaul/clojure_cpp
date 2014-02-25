@@ -17,7 +17,12 @@ using namespace clojure;
 
 void TryEvalAndPrint(const Node& node) {
 	try {
-		std::cout << (node ? node.Eval()->DebugPrint() : "nil") << std::endl;
+		auto result = node.Eval();
+		do {
+			result = result->Eval();
+		} while (result->Next()); // keep on evaluating until we get to an atom
+		
+		std::cout << (node ? result->DebugPrint() : "nil") << std::endl;
 	} catch (const std::runtime_error& e) {
 		std::cerr << "Caught exception: " << e.what() << std::endl;
 	}
@@ -60,58 +65,70 @@ int main(int argc, const char * argv[])
 	// insert code here...
 	std::cout << "Hello, World!\n";
 	
-	auto n = MakeNode2Ptr("TESTING!");
+	auto n = NodePtrWithValue("TESTING!");
 	TryEvalAndPrint(n);
 	
-//	auto n2 = MakeNodePtr();
+//	auto n2 = NodePtrWithNode();
 //	TryEvalAndPrint(n2);
 	
-	auto n3 = MakeNode2Ptr("YAY", n);
+	auto n3 = NodePtrWithValue("YAY", n);
 	TryEvalAndPrint(n3);
 	
-	Node2<int> n4 { 100 }; // "Int: 100"
-	TryEvalAndPrint(n4);
+	Node2<int> n100 { 100 }; // "Int: 100"
+	TryEvalAndPrint(n100);
 	
-	Node2<int> n5 { 200, n4 };
-	TryEvalAndPrint(n5);
+	Node2<int> n300 { 200, n100 };
+	TryEvalAndPrint(n300);
 	
 	// function that takes one or more nodes ? ( should already be fully eval'ed )
 	
 	/// NodeFn '+'
-	NodeFn NodeFn_Plus = [](NodePtr node) -> NodePtr {
+	NodeFn NodeFn_Plus {};
+	NodeFn_Plus = [&NodeFn_Plus](NodePtr node) -> NodePtr {
 		if (!node) {
 			return NilNode;
 		}
-		else if (!node->Rest()) {
+		else if (!node->Next()) {
 			return node;
 		}
 		else {
 			// TODO: recursion: return H + NodeFn_Plus(T)
 			
 			// try to dyamic cast to int ?
-			if (typeid(*node) == typeid(*node->Rest()) && node->ValueTypeInfo() == typeid(int)) {
+			if (typeid(*node) == typeid(*node->Next()) && node->ValueTypeInfo() == typeid(int)) {
 				auto n1 = TryDynamicCastNode<int>(node);
-				auto n2 = TryDynamicCastNode<int>(node->Rest());
-				return MakeNodePtr<Node2<int>>(n1->Value() + n2->Value());
+				auto n2 = TryDynamicCastNode<int>(node->Next());
+				auto res = n1->Value() + n2->Value();
+				if (n2->Next()) {
+					FnNode fnNode { NodeFn_Plus, NodePtrWithValue(res, n2->Next()) };
+					return NodePtrWithNode(fnNode);
+				} else {
+					return NodePtrWithValue(res);
+				}
 			} else { // just concat any other situation
 				std::ostrstream os;
-				os << node->Print() + " " + node->Rest()->Print();
-				return MakeNode2Ptr(os.str());
+				os << node->Print() + " " + node->Next()->Print();
+				return NodePtrWithValue(os.str());
 			}
 		}
 	};
 	
-	TryEvalAndPrint(FnNode{ NodeFn_Plus, n5 });
+//	// ok, try eval and print with fn at head of list
+	NodePtr node150 = NodePtrWithValues(100, 50);
+	FnNode fnNode { NodeFn_Plus, node150};
+	TryEvalAndPrint(fnNode); // 100 + 50 -> 150 ?
 	
-	TryEvalAndPrint(FnNode{ NodeFn_Plus, n3 }); // n3 = {"YAY, nil} -> YAY nil
+	TryEvalAndPrint(FnNode{ NodeFn_Plus, n300 }); // 200 + 100 -> 300 ?
 	
-	// ok, try eval and print with fn at head of list
-	NodePtr node = MakeNodePtr3(100, 50);
-	FnNode fnNode { NodeFn_Plus, node};
-	TryEvalAndPrint(fnNode);
-
+	TryEvalAndPrint(FnNode{ NodeFn_Plus, n3 }); // n3 = {"YAY, "TESTING"} -> "YAY TESTING"
 	
 	// ok, try recursion
+	NodePtr node1150 = NodePtrWithValue(1000, node150);
+	TryEvalAndPrint(FnNode{ NodeFn_Plus, node1150 }); // (1000 + 100) + 50 -> 1150
+	
+	// with list of 4
+	NodePtr node1500 = NodePtrWithValue(350, node1150);
+	TryEvalAndPrint(FnNode { NodeFn_Plus, node1500 });
 	
     return 0;
 }
