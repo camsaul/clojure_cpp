@@ -15,13 +15,23 @@
 #include <strstream>
 
 namespace clojure {
-	std::string readable_name(const std::type_info& typeInfo);
-
 	class Node;
+	
+	template <typename ValueT>
+	class Node2;
+	
 	typedef std::shared_ptr<const Node> NodePtr;
 	
-	template <typename NodeT>
-	NodePtr MakeNodePtr(NodeT node) { return std::make_shared<const NodeT>(node); }
+//	template <typename ValueT>
+//	using Node2Ptr = std::shared_ptr<const Node2<ValueT>>;
+	
+	template <typename NodeT = Node>
+	NodePtr MakeNodePtr(NodeT node = {}) { return std::make_shared<const NodeT>(node); }
+	
+	template <typename ValueT>
+	NodePtr MakeNode2Ptr(ValueT value, NodePtr next = nullptr) { return MakeNodePtr(Node2<ValueT>(value, next)); }
+	
+	typedef std::function<NodePtr(NodePtr)> NodeFn; // should take a const Node* param instead of NodePtr for efficiency ?
 	
 	class Node {
 	public:
@@ -32,6 +42,10 @@ namespace clojure {
 		virtual NodePtr Eval() const; ///< by default just evals to nil
 		
 		virtual std::string Print() const; ///< 'nil'
+		
+		virtual std::string ReadableTypeName() const; ///< returns node type for debugging purposes. Default implementation just uses RTTI type_info
+		
+		virtual operator bool() const; // default implementation returns nil, since base class is empty node
 		
 		virtual ~Node() = default;
 	
@@ -65,7 +79,7 @@ namespace clojure {
 		
 		virtual NodePtr Eval() const override {
 			if (Next()) {
-				throw std::runtime_error { "Not a function: " + readable_name(typeid(*this)) + " is not a function. " };
+				throw std::runtime_error { "Not a function: " + ReadableTypeName() + " is not a function. " };
 			}
 			return MakeNodePtr(*this);
 		}
@@ -74,6 +88,10 @@ namespace clojure {
 			std::ostrstream os;
 			os << value_;
 			return os.str();
+		}
+		
+		virtual operator bool() const override {
+			return value_;
 		}
 		
 		virtual ~Node2() override = default;
@@ -103,6 +121,8 @@ namespace clojure {
 //	private:
 //		const int value_;
 //	};
+
+	static const NodePtr NilNode = MakeNodePtr(Node{});
 }
 
 #endif /* defined(__clojure_cpp__Node__) */
