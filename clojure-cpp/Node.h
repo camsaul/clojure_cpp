@@ -41,11 +41,14 @@ namespace clojure {
 		
 		virtual NodePtr Eval() const; ///< by default just evals to nil
 		
-		virtual std::string Print() const; ///< 'nil'
+		virtual std::string Print() const; ///< nil
+		virtual std::string DebugPrint(int indent = 0) const; ///< 'nil'
 		
 		virtual std::string ReadableTypeName() const; ///< returns node type for debugging purposes. Default implementation just uses RTTI type_info
 		
 		virtual operator bool() const; // default implementation returns nil, since base class is empty node
+		
+		virtual const std::type_info& ValueTypeInfo() const { return typeid(nullptr); }
 		
 		virtual operator NodePtr() const {
 			return MakeNodePtr(*this);
@@ -88,6 +91,23 @@ namespace clojure {
 			return MakeNodePtr(*this);
 		}
 		
+		virtual std::string DebugPrint(int indent = 0) const override {
+			std::ostrstream os;
+			for (int i = 0; i < indent; i++) {
+				os << "\t";
+			}
+			os << ReadableTypeName() << " = " << std::endl;
+			for (int i = 0; i < indent + 1; i++) {
+				os << "\t";
+			}
+			os << value_;
+			
+			if (Next()) os << std::endl << ", next_ = " << Next()->DebugPrint(indent+1);
+
+			os << std::endl;
+			return os.str();
+		}
+		
 		virtual std::string Print() const override {
 			std::ostrstream os;
 			os << value_;
@@ -96,6 +116,10 @@ namespace clojure {
 		
 		virtual operator bool() const override {
 			return value_;
+		}
+		
+		virtual const std::type_info& ValueTypeInfo() const override {
+			return typeid(value_);
 		}
 		
 		virtual operator NodePtr() const override {

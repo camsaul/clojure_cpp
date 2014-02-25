@@ -9,6 +9,7 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <strstream>
 
 #include "Node.h"
 
@@ -16,7 +17,7 @@ using namespace clojure;
 
 void TryEvalAndPrint(const Node& node) {
 	try {
-		std::cout << (node ? node.Eval()->Print() : "nil") << std::endl;
+		std::cout << (node ? node.Eval()->DebugPrint() : "nil") << std::endl;
 	} catch (const std::runtime_error& e) {
 		std::cerr << "Caught exception: " << e.what() << std::endl;
 	}
@@ -47,7 +48,7 @@ const Node2<ValueT>* TryDynamicCastNode(NodePtr node) {
 	}
 	const Node2<ValueT>* result =  dynamic_cast<const Node2<ValueT> *>(node.get());
 	if (!result) {
-		throw std::runtime_error { "type error: " + node->ReadableTypeName() + " (value_ = " + node->Print() + ") is not an int!" };
+		throw std::runtime_error { "type error: " + node->ReadableTypeName() + " (value_ = " + node->DebugPrint() + ") is not an int!" };
 	}
 	return result;
 }
@@ -62,10 +63,10 @@ int main(int argc, const char * argv[])
 	auto n = MakeNode2Ptr("TESTING!");
 	TryEvalAndPrint(n);
 	
-	auto n2 = MakeNodePtr();
-	TryEvalAndPrint(n2);
+//	auto n2 = MakeNodePtr();
+//	TryEvalAndPrint(n2);
 	
-	auto n3 = MakeNode2Ptr("YAY", n2);
+	auto n3 = MakeNode2Ptr("YAY", n);
 	TryEvalAndPrint(n3);
 	
 	Node2<int> n4 { 100 }; // "Int: 100"
@@ -74,7 +75,7 @@ int main(int argc, const char * argv[])
 	Node2<int> n5 { 200, n4 };
 	TryEvalAndPrint(n5);
 	
-	// function that takes one or more nodes ?
+	// function that takes one or more nodes ? ( should already be fully eval'ed )
 	
 	/// NodeFn '+'
 	NodeFn NodeFn_Plus = [](NodePtr node) -> NodePtr {
@@ -82,22 +83,27 @@ int main(int argc, const char * argv[])
 			return NilNode;
 		}
 		else if (!node->Next()) {
-			return node->Eval();
+			return node;
 		}
 		else {
 			// TODO: recursion: return H + NodeFn_Plus(T)
 			
 			// try to dyamic cast to int ?
-			auto next = node->Next();
-			auto n1 = TryDynamicCastNode<int>(node);
-			auto n2 = TryDynamicCastNode<int>(node->Next());
-			return MakeNodePtr<Node2<int>>(n1->Value() + n2->Value());
+			if (typeid(*node) == typeid(*node->Next()) && node->ValueTypeInfo() == typeid(int)) {
+				auto n1 = TryDynamicCastNode<int>(node);
+				auto n2 = TryDynamicCastNode<int>(node->Next());
+				return MakeNodePtr<Node2<int>>(n1->Value() + n2->Value());
+			} else { // just concat any other situation
+				std::ostrstream os;
+				os << node->Print() + " " + node->Next()->Print();
+				return MakeNode2Ptr(os.str());
+			}
 		}
 	};
 	
 	TryEvalAndPrint(NodeFn_Plus, n5); // 300 ?
 	
-	TryEvalAndPrint(NodeFn_Plus, n3); // n3 = {"YAY, nil} exception
+	TryEvalAndPrint(NodeFn_Plus, n3); // n3 = {"YAY, nil} -> YAY nil
 	
 	// ok, try recursion
 	

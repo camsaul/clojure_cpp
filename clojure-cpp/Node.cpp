@@ -25,10 +25,15 @@ namespace clojure {
 			free(temp);
 			
 			// it would be nice (maybe) to remove std::__1::, etc.
-			static const vector<string> removals { "std::__1::", "clojure::"};
+			static const vector<string> removals { "std::__1::", "clojure::", "const", "\\*"};
 			for (auto& strToRemove : removals) {
 				std::regex rx { strToRemove };
 				result = std::regex_replace(result, rx, "");
+			}
+			static const vector<pair<string, string>> replacements { { "char", "string" }, {"Node2<([^>]+)>", "$1"}};
+			for (auto& replacement : replacements) {
+				std::regex rx { replacement.first };
+				result = std::regex_replace(result, rx, replacement.second);
 			}
 			
 			return result;
@@ -48,8 +53,12 @@ namespace clojure {
 		return nullptr;
 	}
 	
+	std::string Node::DebugPrint(int) const {
+		return "nil";
+	}
+	
 	std::string Node::Print() const {
-		return "nil (empty)";
+		return "nil";
 	}
 	
 	Node::Node(std::shared_ptr<const Node> next):
