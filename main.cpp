@@ -63,8 +63,11 @@ NodePtr Read(string::iterator begin, string::iterator end) {
     while (begin != end && *begin == ' ') begin++;
 
     // read a token
+    bool escape = false;
     string token = "";
-    while (begin != end && *begin != ' ') {
+    while (begin != end) {
+        if (!escape && *begin == ' ') break;
+        escape = *begin == '\\';
         token.push_back(*begin);
         begin++;
     }
@@ -92,7 +95,7 @@ int main() {
 
     RP("12");
     RP("12 abcde 1997");
-    
+    RP("12 ab\\ cde 1997");
     
     return 0;
 }
