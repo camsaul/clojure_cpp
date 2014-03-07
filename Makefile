@@ -1,23 +1,20 @@
 P := clojure++
 
-SOURCES := main.cpp
+HEADERS := $(shell find . -name "*.h" -and -not -name "*flymake*" -and -not -name "*\#*")
+SOURCES := $(shell find . -name "*.cpp" -and -not -name "*flymake*" -and -not -name "*\#*")
 OBJECTS := $(SOURCES:.cpp=.o)
 DEPS := $(SOURCES:.cpp=.d)
 
 INCLUDES :=
+CPPFLAGS := $(INCLUDES)
 
-CPPFLAGS :=
-
-WARNING_FLAGS := -Weverything -Werror -Wfatal-errors -Wno-c++98-compat
-
-CXXFLAGS := -std=c++11 -pipe -gfull -stdlib=libc++ -O0
+WARNING_FLAGS := -Weverything -Werror -Wfatal-errors -Wno-c++98-compat -Wno-missing-prototypes
+DIAGNOSTIC_OPTS := -fdiagnostics-show-template-tree -fno-elide-type
+COMPILER_FLAGS := -std=c++11 -pipe -gfull -stdlib=libc++ -O0
+CXXFLAGS := $(WARNING_FLAGS) $(DIAGNOSTIC_OPTS) $(COMPILER_FLAGS)
 
 LDFLAGS := -fatal_warnings
-
 LIBS :=
-
-COMPILER_FLAGS := $(INCLUDES) $(CPPFLAGS) $(WARNING_FLAGS) $(CXXFLAGS)
-LINKER_FLAGS := $(LDFLAGS) $(LIBS)
 
 
 $(P): deps $(SOURCES) $(HEADERS)
@@ -26,7 +23,7 @@ $(P): deps $(SOURCES) $(HEADERS)
 deps: $(DEPS)
 
 all : $(OBJECTS)
-	$(CXX) $(COMPILER_FLAGS) $(OBJECTS) -o $(P) $(LINKER_FLAGS)
+	$(CXX) $(OBJECTS) -o $(P)
 
 %.d : %.cpp
 	$(CXX) $(COMPILER_FLAGS) -MF"$@" -MG -MM -MT"$(<:.cpp=.o)" "$<"
