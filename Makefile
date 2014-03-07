@@ -8,13 +8,15 @@ INCLUDES :=
 
 CPPFLAGS :=
 
-CXXFLAGS := -std=c++11 -Weverything -pipe -gfull -stdlib=libc++ -O0 -Werror -Wfatal-errors
+WARNING_FLAGS := -Weverything -Werror -Wfatal-errors -Wno-c++98-compat
+
+CXXFLAGS := -std=c++11 -pipe -gfull -stdlib=libc++ -O0
 
 LDFLAGS := -fatal_warnings
 
 LIBS :=
 
-COMPILER_FLAGS := $(INCLUDES) $(CPPFLAGS) $(CXXFLAGS)
+COMPILER_FLAGS := $(INCLUDES) $(CPPFLAGS) $(WARNING_FLAGS) $(CXXFLAGS)
 LINKER_FLAGS := $(LDFLAGS) $(LIBS)
 
 
