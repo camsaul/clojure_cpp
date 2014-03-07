@@ -53,7 +53,7 @@ namespace clojure {
         
         virtual string ToString() const override {
             ostringstream os;
-            os << ReadableName(*Head()) << '<' << *Head() << '>';
+            os << '<' << ReadableName(*Head()) << '>' << *Head();
             if (Tail()) os << ' ' << Tail()->ToString();
             return os.str();
         }
