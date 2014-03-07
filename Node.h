@@ -4,6 +4,8 @@
 #include <memory>
 #include <sstream>
 
+#include "Util.h"
+
 namespace clojure {
     using namespace std;
 
@@ -50,8 +52,8 @@ namespace clojure {
         const Ptr Head() const { return head_; }
         
         virtual string ToString() const override {
-            ostringstream os; 
-            os << '<' << *Head() << '>';
+            ostringstream os;
+            os << ReadableName(*Head()) << '<' << *Head() << '>';
             if (Tail()) os << ' ' << Tail()->ToString();
             return os.str();
         }

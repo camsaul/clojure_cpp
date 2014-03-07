@@ -8,7 +8,8 @@ DEPS := $(SOURCES:.cpp=.d)
 INCLUDES :=
 CPPFLAGS := $(INCLUDES)
 
-WARNING_FLAGS := -Weverything -Werror -Wfatal-errors -Wno-c++98-compat -Wno-missing-prototypes
+WARNING_FLAGS := -Weverything -Werror -Wfatal-errors -Wno-c++98-compat -Wno-missing-prototypes \
+		 -Wno-exit-time-destructors
 DIAGNOSTIC_OPTS := -fdiagnostics-show-template-tree -fno-elide-type
 COMPILER_FLAGS := -std=c++11 -pipe -gfull -stdlib=libc++ -O0
 CXXFLAGS := $(WARNING_FLAGS) $(DIAGNOSTIC_OPTS) $(COMPILER_FLAGS)
