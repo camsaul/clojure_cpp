@@ -1,4 +1,4 @@
-
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <regex>
@@ -85,10 +85,13 @@ void Print(NodePtr node) {
 }
 
 int main() {
-    // read in a token
-    string token = "12 abcd asas    ";
-    auto node = Read(token.begin(), token.end());
-    Print(node);
+    auto RP = [](string s){
+        auto node = Read(s.begin(), s.end());
+        Print(s);
+    };
+
+    RP("12");
+    RP("12 abcde 1997");
     
     
     return 0;
