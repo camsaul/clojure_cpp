@@ -1,3 +1,4 @@
+#include <exception>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -54,13 +55,26 @@ NodePtr MakeNode(T t, NodePtr ptr = nullptr) {
 
 /// \param read Tokens that have already been read
 /// \param text remaining text to parse
-NodePtr Read(string::iterator begin, string::iterator end) {
+NodePtr Read(string::iterator& begin, const string::iterator& end) {
     if (begin == end) {
         return nullptr;
     }
 
-    // ignore whitespace
+    // slurp all whitespace
     while (begin != end && *begin == ' ') begin++;
+
+    // a '(' pushes a new node, ')' returns null
+    if (begin != end) {
+        if (*begin == '(') {
+            begin++;
+            if (begin == end) {
+                throw runtime_error { "unbalanced parentheses: unexpected '(' at end."};
+            }
+            return MakeNode(MakeNode(begin, end), MakeNode(begin, end));
+        } else if (*begin == ')') {
+            return nullptr;
+        }
+    }
 
     // read a token
     bool escape = false;
