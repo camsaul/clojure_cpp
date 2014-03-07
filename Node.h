@@ -51,20 +51,38 @@ namespace clojure {
         Ptr Head() { return head_; }
         const Ptr Head() const { return head_; }
         
-        virtual string ToString() const override {
-            ostringstream os;
-            os << '<' << ReadableName(*Head()) << '>' << *Head();
-            if (Tail()) os << ' ' << Tail()->ToString();
-            return os.str();
-        }
+        virtual string ToString() const override;
     protected:
         Ptr head_ = nullptr;
     };
+
+
+    //***** MakeNode *****//
     
     template <typename T>
     NodePtr MakeNode(T t, NodePtr ptr = nullptr) {
         return make_shared<Node<T>>(t, ptr); 
     }
+
+    template <>
+    NodePtr MakeNode<NodePtr>(NodePtr ptr1, NodePtr ptr2);
+
+
+    //***** Node::ToString() *****//
+
+    template <typename T>
+    string Node<T>::ToString() const {
+        ostringstream os;
+        os << '<' << ReadableName(*Head()) << ">(" << *Head() << ')';
+        if (Tail()) os << ' ' << Tail()->ToString();
+        return os.str();
+    }
+
+    template <>
+    string Node<string>::ToString() const;
+
+    template <>
+    string Node<BaseNode>::ToString() const;
 }
 
 #endif
