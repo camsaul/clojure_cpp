@@ -87,7 +87,7 @@ void Print(NodePtr node) {
 int main() {
     auto RP = [](string s){
         auto node = Read(s.begin(), s.end());
-        Print(s);
+        Print(node);
     };
 
     RP("12");
