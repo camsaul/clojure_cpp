@@ -13,7 +13,8 @@ INCLUDES := -Ivendor $(patsubst %,-include %,$(PCH_SOURCES))
 CPPFLAGS :=
 
 WARNING_FLAGS := -Weverything -Werror -Wfatal-errors -Wno-c++98-compat -Wno-missing-prototypes \
-		 -Wno-exit-time-destructors -Winline -Wno-c++98-compat-pedantic
+		 -Wno-exit-time-destructors -Winline -Wno-c++98-compat-pedantic \
+		 -Wno-missing-variable-declarations -Wno-global-constructors -Wno-padded
 DIAGNOSTIC_OPTS := -fdiagnostics-show-template-tree -fno-elide-type
 COMPILER_FLAGS := -std=c++11 -pipe -gfull -stdlib=libc++ -O0
 CXXFLAGS := $(INCLUDES) $(WARNING_FLAGS) $(DIAGNOSTIC_OPTS) $(COMPILER_FLAGS)

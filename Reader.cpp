@@ -1,70 +1,64 @@
-#include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "Reader.h"
 
+namespace qi = boost::spirit::qi;
+namespace ascii = boost::spirit::ascii;
+namespace phoenix = boost::phoenix;
+namespace fusion = boost::fusion;
+
 namespace clojure {
-    NodePtr Read(string::iterator& begin, string::iterator& end) {
-        static int depth = 0;
-        
-        if (begin == end) {
-            if (depth != 0) {
-                depth = 0; // reset so it works next time
-                throw runtime_error { "Mismatched parentheses : " + std::to_string(abs(depth)) + " too many " +
-                        (depth > 0 ? "opening" : "closing") + " parens "};
-            }
-            return nullptr;
+    template <typename Iterator>
+    struct grammar : qi::grammar<Iterator, sexp(), ascii::space_type>
+    {
+        grammar() : grammar::base_type(list)
+        {
+            using qi::lexeme;
+            using qi::char_;
+            using namespace qi::labels;
+            // using qi::string;
+
+            token %= +(char_ -'(' -')' -'#' -'"' -qi::space);
+
+            node %= (token|list);
+            list %= '('
+                >> *node
+                >> ')'
+                ;
+
+            // on_success(token,
+            //            std::cout << "Parsed token: "
+            //            << phoenix::construct<std::string>(_3, _2)
+            //            << std::endl);
         }
-        
-        // slurp all whitespace
-        while (begin != end && *begin == ' ') begin++;
-        
-        // read a token or delimiter
-        
-        string token = "";
-        while (begin != end) {
-            // handle escape sequence
-            if (*begin == '\\') {
-                begin++;
-                if (begin == end) throw runtime_error { "Invalid escape token at end of input!" };
-                token.push_back(*begin);
-                begin++;
-                continue;
-            }
-            
-            if (*begin == ' ') {
-                break; // end of token
-            }
-            else if (*begin == '(') {
-                if (begin == end) {
-                    throw runtime_error { "unbalanced parentheses: unexpected '(' at end."};
-                } else if (!token.empty()) {
-                    break; // end of token. next loop around will handle this paren as separate token
-                } else {
-                    // cout << "PUSH PARENS" << endl;
-                    depth++;
-                    begin++;
-                    return MakeNode(Read(begin, end), Read(begin, end));
-                }
-            } else if (*begin == ')') {
-                if (!token.empty()) break;
-                else {
-                    begin++;
-                    depth--;
-                    // cout << "POP PARENS" << endl;
-                    return nullptr;                
-                }
-            }                      
-            
-            token.push_back(*begin);
-            begin++;
+
+        qi::rule<Iterator, std::string()> token;
+        qi::rule<Iterator, sexp_node(), ascii::space_type> node;
+        qi::rule<Iterator, sexp(), ascii::space_type> list;
+    };
+}
+
+BOOST_FUSION_ADAPT_STRUCT(clojure::sexp,
+                          (std::vector<clojure::sexp_node>, items));
+
+namespace clojure {
+    sexp Read (std::string& input) {
+        static grammar<std::string::const_iterator> grammar;
+
+        std::string::const_iterator itr = input.begin();
+        std::string::const_iterator end = input.end();
+
+        sexp output;
+
+        bool r = qi::phrase_parse(itr, end, grammar, ascii::space, output);
+
+        if (r && itr == end) {
+            return output; 
+        } else {
+            throw std::runtime_error { "Parse error near: " + std::string(itr, end) };
         }
-        
-        if (token.empty()) return nullptr;
-        
-        // cout << "ACCEPT TOKEN: '" << token << "' @" << depth << endl;
-        
-        return MakeNode(token, Read(begin, end));
-    }         
+    }
 }
