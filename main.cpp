@@ -2,14 +2,17 @@
 #include <functional>
 #include <iostream>
 
-using namespace std;
-using namespace boost::spirit::qi;
+using std::complex;
 
 template <typename Iterator>
 bool parse_complex(Iterator first, Iterator last, complex<double>& c)
 {
-    typedef boost::phoenix::reference ref;
     using boost::spirit::ascii::space;
+    using boost::phoenix::ref;
+    using boost::spirit::qi::double_;
+    using boost::spirit::qi::phrase_parse;
+    using boost::spirit::qi::_1;
+
     double rN = 0.0f;
     double iN = 0.0f;
 
@@ -40,8 +43,8 @@ int main() {
 
         complex<double> c {};
         parse_complex(str.begin(), str.end(), c);
-        cout << "Read: " << c.real() << ", " << c.imag() << endl;
-        cout << "> " << endl;
+        std::cout << "Read: " << c.real() << ", " << c.imag() << std::endl;
+        std::cout << "> " << std::endl;
     }
 
     return 0;

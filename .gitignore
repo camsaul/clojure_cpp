@@ -3,3 +3,5 @@
 clojure++
 nul
 *flymake*
+*.pch
+vendor

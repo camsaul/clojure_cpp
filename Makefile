@@ -1,7 +1,7 @@
 P := clojure++
 
-HEADERS := $(wildcard *.h)
-SOURCES := $(wildcard *.cpp)
+HEADERS := $(shell find . -name "*.h" -and -not -name "*flymake*")
+SOURCES := $(shell find . -name "*.cpp" -and -not -name "*flymake*")
 OBJECTS := $(SOURCES:.cpp=.o)
 DEPS := $(SOURCES:.cpp=.d)
 
@@ -43,4 +43,4 @@ clean :
 	$(RM) -f $(PCH)
 
 check-syntax:
-	$(CXX) $(INCLUDES) $(COMPILER_FLAGS) -Weverything -o nul -S $(CHK_SOURCES)
+	$(CXX) $(INCLUDES) $(WARNING_FLAGS) $(COMPILER_FLAGS) -Weverything -o nul -S $(CHK_SOURCES)
