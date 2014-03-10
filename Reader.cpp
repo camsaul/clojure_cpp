@@ -11,6 +11,16 @@ namespace phoenix = boost::phoenix;
 namespace fusion = boost::fusion;
 
 namespace clojure {
+    struct symbol_table_ : qi::symbols<char, sexp_node>
+    {
+        symbol_table_()
+        {
+            add
+                ("TEST", sexp_node{"test"})
+            ;
+        }
+    } symbol_table;
+    
     template <typename Iterator>
     struct grammar : qi::grammar<Iterator, sexp(), ascii::space_type>
     {
@@ -23,11 +33,14 @@ namespace clojure {
 
             token %= +(char_ -'(' -')' -'#' -'"' -qi::space);
 
-            node %= (token|list);
+            node %= (symbol_table|token|list);
+
             list %= '('
                 >> *node
                 >> ')'
                 ;
+
+            // special forms
 
             // on_success(token,
             //            std::cout << "Parsed token: "
